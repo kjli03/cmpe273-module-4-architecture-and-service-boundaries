@@ -96,7 +96,7 @@ Run the tests with:
 pytest
 ```
 
-### Dependency failure test
+### Partial failure test
 
 First confirm the normal flow by submitting an order from a third terminal:
 
@@ -122,20 +122,19 @@ response, and successful subsequent request.
 
 ### Architecture Diagram
 
-Client[User / Client] -->|submit order| Order[Order Service<br/>Creates and tracks orders]
 Order -->|check item availability| Inventory[Inventory Service<br/>Tracks item availability]
 Inventory -->|available / unavailable| Order
 Order -->|order-created notification| Notification[Notification Service<br/>Notifies users when an order is created]
 
 Order coordinates the workflow, checks availability with Inventory before accepting an order, then sends a notification event after creating the order. Each service runs as an independent process.
 
-Example of successful request
+#### Example of successful request
 ![alt text](image.png)
 
-Proof of inventory failure test; stopping the inventory service
+#### Proof of inventory failure test; stopping the inventory service
 ![alt text](image-1.png)
 
-Inventory stopped, Order still running
+#### Inventory stopped, Order still running
 ![alt text](image-2.png)
 
 ### Explanation of each component's responsibility
@@ -168,7 +167,7 @@ Inventory stopped, Order still running
 Each service is the source of truth for its own data. Other services use its
 API or events rather than accessing its storage directly.
 
-### Service boundary rationale
+### Service boundaries
 
 The boundaries follow business capabilities and data ownership. Order owns the order lifecycle and coordinates the request; Inventory is responsible for the authoritative availability decision; Notification handles user-facing communication after an order is created. This keeps each service's rules and data changes localized, lets the services be deployed independently, and prevents an Inventory outage from crashing Order. The synchronous Inventory check is needed before Order can accept the request. Notification is modeled as a separate, post-creation event so delivery can evolve independently.
 
